@@ -9,7 +9,7 @@ import (
 
 //go:generate mockgen -destination=./mock/fulfillment_service.go -package=mock . FulfillmentService
 type FulfillmentService interface {
-	Create(ctx context.Context, input model.FulfillmentV2Input) error
+	Create(ctx context.Context, input model.FulfillmentV2Input) (*model.Fulfillment, error)
 }
 
 type FulfillmentServiceOp struct {
@@ -20,11 +20,12 @@ var _ FulfillmentService = &FulfillmentServiceOp{}
 
 type mutationFulfillmentCreateV2 struct {
 	FulfillmentCreateV2Result struct {
-		UserErrors []model.UserError `json:"userErrors,omitempty"`
+		Fulfillment model.Fulfillment `json:"fulfillment,omitempty"`
+		UserErrors  []model.UserError `json:"userErrors,omitempty"`
 	} `graphql:"fulfillmentCreateV2(fulfillment: $fulfillment)" json:"fulfillmentCreateV2"`
 }
 
-func (s *FulfillmentServiceOp) Create(ctx context.Context, fulfillment model.FulfillmentV2Input) error {
+func (s *FulfillmentServiceOp) Create(ctx context.Context, fulfillment model.FulfillmentV2Input) (*model.Fulfillment, error) {
 	m := mutationFulfillmentCreateV2{}
 
 	vars := map[string]interface{}{
@@ -32,12 +33,12 @@ func (s *FulfillmentServiceOp) Create(ctx context.Context, fulfillment model.Ful
 	}
 	err := s.client.gql.Mutate(ctx, &m, vars)
 	if err != nil {
-		return fmt.Errorf("mutation: %w", err)
+		return nil, fmt.Errorf("mutation: %w", err)
 	}
 
 	if len(m.FulfillmentCreateV2Result.UserErrors) > 0 {
-		return fmt.Errorf("UserErrors: %+v", m.FulfillmentCreateV2Result.UserErrors)
+		return nil, fmt.Errorf("UserErrors: %+v", m.FulfillmentCreateV2Result.UserErrors)
 	}
 
-	return nil
+	return &m.FulfillmentCreateV2Result.Fulfillment, nil
 }

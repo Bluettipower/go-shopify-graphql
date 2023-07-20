@@ -1,4 +1,4 @@
-module github.com/r0busta/go-shopify-graphql/v8
+module github.com/bluettipower/go-shopify-graphql/v8
 
 go 1.20
 

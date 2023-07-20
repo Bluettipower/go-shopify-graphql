@@ -13,10 +13,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/bluettipower/go-shopify-graphql/v8/rand"
+	"github.com/bluettipower/go-shopify-graphql/v8/utils"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/r0busta/go-shopify-graphql-model/v3/graph/model"
-	"github.com/r0busta/go-shopify-graphql/v8/rand"
-	"github.com/r0busta/go-shopify-graphql/v8/utils"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v4"
 )
