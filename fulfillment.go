@@ -35,7 +35,7 @@ type mutationFulfillmentTrackingInfoUpdateV2 struct {
 
 type FulfillmentTrackingInfoUpdateV2Input struct {
 	FulfillmentID     string             `json:"fulfillmentId,omitempty"`
-	NotifyCustomer    bool               `json:"notifyCustomer,omitempty"`
+	NotifyCustomer    *bool              `json:"notifyCustomer,omitempty"`
 	TrackingInfoInput *TrackingInfoInput `json:"trackingInfoInput,omitempty"`
 }
 
