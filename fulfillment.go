@@ -9,8 +9,9 @@ import (
 
 //go:generate mockgen -destination=./mock/fulfillment_service.go -package=mock . FulfillmentService
 type FulfillmentService interface {
-	Create(ctx context.Context, input model.FulfillmentV2Input) (*model.Fulfillment, error)
-	Update(ctx context.Context, input FulfillmentTrackingInfoUpdateV2Input) (*model.Fulfillment, error)
+	// Create(ctx context.Context, input model.FulfillmentV2Input) (*model.Fulfillment, error)
+	Create(ctx context.Context, query string, input model.FulfillmentV2Input) (*model.Fulfillment, error)
+	Update(ctx context.Context, query string, input FulfillmentTrackingInfoUpdateV2Input) error
 }
 
 type FulfillmentServiceOp struct {
@@ -28,14 +29,13 @@ type mutationFulfillmentCreateV2 struct {
 
 type mutationFulfillmentTrackingInfoUpdateV2 struct {
 	FulfillmentTrackingInfoUpdateV2Result struct {
-		Fulfillment model.Fulfillment `json:"fulfillment,omitempty"`
-		UserErrors  []model.UserError `json:"userErrors,omitempty"`
-	} `graphql:"fulfillmentTrackingInfoUpdateV2(fulfillment: $fulfillment)" json:"fulfillmentTrackingInfoUpdateV2"`
+		UserErrors []model.UserError `json:"userErrors,omitempty"`
+	} `graphql:"fulfillmentTrackingInfoUpdateV2($fulfillmentId: fulfillmentId, $trackingInfoInput: trackingInfoInput, $notifyCustomer: notifyCustomer)" json:"fulfillmentTrackingInfoUpdateV2"`
 }
 
 type FulfillmentTrackingInfoUpdateV2Input struct {
 	FulfillmentID     string             `json:"fulfillmentId,omitempty"`
-	NotifyCustomer    *bool              `json:"notifyCustomer,omitempty"`
+	NotifyCustomer    *bool              `json:"notifyCustomer,omitempty,omitempty"`
 	TrackingInfoInput *TrackingInfoInput `json:"trackingInfoInput,omitempty"`
 }
 
@@ -47,12 +47,13 @@ type TrackingInfoInput struct {
 	Urls    []string `json:"urls,omitempty"`
 }
 
-func (s *FulfillmentServiceOp) Create(ctx context.Context, fulfillment model.FulfillmentV2Input) (*model.Fulfillment, error) {
+func (s *FulfillmentServiceOp) Create(ctx context.Context, query string, fulfillment model.FulfillmentV2Input) (*model.Fulfillment, error) {
 	m := mutationFulfillmentCreateV2{}
 	vars := map[string]interface{}{
 		"fulfillment": fulfillment,
 	}
-	err := s.client.gql.Mutate(ctx, &m, vars)
+
+	err := s.client.gql.MutateString(ctx, query, vars, &m)
 	if err != nil {
 		return nil, fmt.Errorf("mutation: %w", err)
 	}
@@ -62,7 +63,7 @@ func (s *FulfillmentServiceOp) Create(ctx context.Context, fulfillment model.Ful
 	return &m.FulfillmentCreateV2Result.Fulfillment, nil
 }
 
-func (s *FulfillmentServiceOp) Update(ctx context.Context, fulfillment FulfillmentTrackingInfoUpdateV2Input) (*model.Fulfillment, error) {
+func (s *FulfillmentServiceOp) Update(ctx context.Context, query string, fulfillment FulfillmentTrackingInfoUpdateV2Input) error {
 	m := mutationFulfillmentTrackingInfoUpdateV2{}
 
 	vars := map[string]interface{}{
@@ -70,12 +71,12 @@ func (s *FulfillmentServiceOp) Update(ctx context.Context, fulfillment Fulfillme
 		"notifyCustomer":    fulfillment.NotifyCustomer,
 		"trackingInfoInput": fulfillment.TrackingInfoInput,
 	}
-	err := s.client.gql.Mutate(ctx, &m, vars)
+	err := s.client.gql.MutateString(ctx, query, vars, &m)
 	if err != nil {
-		return nil, fmt.Errorf("mutation: %w", err)
+		return fmt.Errorf("mutation: %w", err)
 	}
 	if len(m.FulfillmentTrackingInfoUpdateV2Result.UserErrors) > 0 {
-		return nil, fmt.Errorf("UserErrors: %+v", m.FulfillmentTrackingInfoUpdateV2Result.UserErrors)
+		return fmt.Errorf("UserErrors: %+v", m.FulfillmentTrackingInfoUpdateV2Result.UserErrors)
 	}
-	return &m.FulfillmentTrackingInfoUpdateV2Result.Fulfillment, nil
+	return nil
 }

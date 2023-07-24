@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultShopifyAPIVersion = "2022-04"
+	defaultShopifyAPIVersion = "2023-07"
 )
 
 type Client struct {
